@@ -2,54 +2,711 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>FinalWeb 메인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - Campus All In One (2335035 진우성)</title>
     <style>
-        /* 방명록 영역 기본 숨김 처리 및 여백 설정 */
-        #guestbook-section {
-            display: none;
-            margin-top: 20px;
-            max-width: 800px;
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --accent: #f59e0b;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* 상단 헤더 & 네비게이션 */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .logo span { font-size: 0.85rem; background: var(--accent); color: #000; padding: 2px 8px; border-radius: 12px; }
+        nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        nav button {
+            background: rgba(255,255,255,0.12);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        nav button:hover, nav button.active { background: var(--primary-light); font-weight: bold; }
+        .auth-btns button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+
+        /* 메인 컨테이너 & SPA 페이지 */
+        main { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        .page { display: none; animation: fadeIn 0.25s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 그리드 & 카드 UI */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+        .card h3 { color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--bg); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* 폼 & 버튼 공통 */
+        input, select, textarea {
+            width: 100%;
+            padding: 9px 12px;
+            margin: 6px 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .btn {
+            background: var(--primary-light);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .btn:hover { background: var(--primary); }
+        .btn-accent { background: var(--accent); color: #000; }
+        .btn-accent:hover { background: #d97706; color: #fff; }
+        .result-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-left: 4px solid var(--primary-light);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        /* 반응속도 게임 영역 */
+        #reaction-pad {
+            height: 150px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            background: #64748b;
+            margin: 10px 0;
+        }
+
+        /* 모달 (로그인 / 회원가입) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .modal-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* 맛집 뱃지 */
+        .badge { display: inline-block; padding: 2px 8px; font-size: 0.8rem; border-radius: 6px; background: #dbeafe; color: var(--primary); font-weight: bold; }
+        footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.85rem; }
     </style>
 </head>
 <body>
-    <hr>
-    <a href="https://github.com/asta7107/FinalWeb/issues" target="_blank">게시판 이슈 이동</a>
-    <hr>
-    <!-- 페이지 이동을 막고 자바스크립트 함수를 호출하도록 설정 -->
-    <a href="javascript:void(0);" onclick="toggleGuestbook()">방명록 이동</a>
-    <hr>
 
-    <!-- 밑줄(<hr>) 아래에 나타날 방명록 영역 -->
-    <div id="guestbook-section">
-        <script src="https://giscus.app/client.js"
-                data-repo="asta7107/FinalWeb"
-                data-repo-id="R_kgDOVvx8ag"
-                data-category="General"
-                data-category-id="DIC_kwDOVvx8as4DLOYr"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="ko"
-                crossorigin="anonymous"
-                async>
-        </script>
+<header>
+    <div class="logo" onclick="showPage('home')">
+        🎓 CAO <span>Campus All In One</span>
     </div>
+    <nav id="main-nav">
+        <button onclick="showPage('home')" class="active" data-page="home">1. 홈 / 브리핑</button>
+        <button onclick="showPage('tools')" data-page="tools">2. 펀 & 정산 툴</button>
+        <button onclick="showPage('games')" data-page="games">3. 미니게임 존</button>
+        <button onclick="showPage('food')" data-page="food">4. 캠퍼스 맛집 & 리뷰</button>
+        <button onclick="showPage('cs')" data-page="cs">5. 고객센터</button>
+        <button onclick="showPage('mypage')" data-page="mypage">마이페이지</button>
+    </nav>
+    <div class="auth-btns" id="auth-area">
+        <button onclick="openModal('loginModal')">로그인</button>
+        <button onclick="openModal('signupModal')">회원가입</button>
+    </div>
+</header>
 
-    <script>
-        function toggleGuestbook() {
-            const guestbook = document.getElementById('guestbook-section');
-            
-            // 현재 숨겨져 있으면 보여주고, 이미 열려 있으면 다시 숨김
-            if (guestbook.style.display === 'none' || guestbook.style.display === '') {
-                guestbook.style.display = 'block';
-            } else {
-                guestbook.style.display = 'none';
+<main>
+    <!-- 1. 홈 / 소개 (캠퍼스 브리핑) -->
+    <section id="home" class="page active">
+        <div class="grid-2">
+            <div class="card">
+                <h3>🌤️ 오늘의 캠퍼스 날씨 & 옷차림</h3>
+                <select id="weather-select" onchange="updateWeather()">
+                    <option value="sunny">맑음 (19°C / 미세먼지 좋음)</option>
+                    <option value="cloudy">흐림 (14°C / 선선함)</option>
+                    <option value="rain">비 (11°C / 강수확률 80%)</option>
+                    <option value="cold">한파 (2°C / 체감 -2°C)</option>
+                </select>
+                <div id="weather-display" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>⏳ 실시간 공강 타임머신</h3>
+                <p style="font-size: 0.9rem; color: var(--muted);">현재 시각: <strong id="live-clock"></strong></p>
+                <label style="font-size: 0.85rem;">다음 수업 시작 시간 설정:</label>
+                <input type="time" id="next-class-time" value="15:00" onchange="updateCountdown()">
+                <div id="countdown-display" class="result-box"></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>💬 오늘의 캠퍼스 명언 <button class="btn" style="padding:4px 10px; font-size:0.8rem;" onclick="nextQuote()">다른 명언</button></h3>
+                <div id="quote-box" class="result-box" style="font-style: italic;"></div>
+            </div>
+
+            <div class="card">
+                <h3>🚀 퀵 런처 (자주 쓰는 기능 바로가기)</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="btn" onclick="showPage('tools')">💰 더치페이 계산</button>
+                    <button class="btn btn-accent" onclick="showPage('tools')">🪜 벌칙 사다리타기</button>
+                    <button class="btn" onclick="showPage('games')">⚾ 3자리 숫자야구</button>
+                    <button class="btn" onclick="showPage('food')">🍜 학교 앞 인기 맛집</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. 펀 & 정산 툴 -->
+    <section id="tools" class="page">
+        <div class="grid-3">
+            <!-- 스마트 더치페이 -->
+            <div class="card">
+                <h3>💰 스마트 더치페이 계산기</h3>
+                <label>모임명 (내역 저장용)</label>
+                <input type="text" id="dutch-title" placeholder="예: 1차 뒷풀이 회식">
+                <label>총 결제 금액 (원)</label>
+                <input type="number" id="dutch-total" placeholder="예: 54000">
+                <label>참여 인원 (명)</label>
+                <input type="number" id="dutch-people" placeholder="예: 4">
+                <button class="btn" style="width:100%;" onclick="calcDutch()">정산 및 내역 저장</button>
+                <div id="dutch-res" class="result-box">금액과 인원을 입력하세요.</div>
+            </div>
+
+            <!-- 벌칙 사다리타기 -->
+            <div class="card">
+                <h3>🪜 벌칙 사다리타기</h3>
+                <label>참여자 이름 (쉼표로 구분)</label>
+                <input type="text" id="ladder-names" value="진우성, 김철수, 이영희, 박민수">
+                <label>벌칙/당첨 항목 (인원수와 동일하게)</label>
+                <input type="text" id="ladder-items" value="커피 쏘기, 통과, 통과, 설거지/정리">
+                <button class="btn btn-accent" style="width:100%;" onclick="runLadder()">사다리 결과 확인!</button>
+                <div id="ladder-res" class="result-box">버튼을 누르면 무작위로 매칭됩니다.</div>
+            </div>
+
+            <!-- 랜덤 룰렛 -->
+            <div class="card">
+                <h3>🎡 오늘의 랜덤 룰렛</h3>
+                <label>후보 항목 (쉼표로 구분)</label>
+                <textarea id="roulette-items" rows="3">제육볶음, 돈까스, 마라탕, 학식, 서브웨이</textarea>
+                <button class="btn" style="width:100%;" onclick="spinRoulette()">룰렛 돌리기</button>
+                <div id="roulette-res" class="result-box">결정장애 해결! 룰렛을 돌려보세요.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 미니게임 존 (공강 아케이드) -->
+    <section id="games" class="page">
+        <div class="grid-3">
+            <!-- 3자리 숫자야구 -->
+            <div class="card">
+                <h3>⚾ 3자리 숫자야구 <button class="btn" style="padding:3px 8px; font-size:0.8rem;" onclick="initBaseball()">새 게임</button></h3>
+                <p style="font-size:0.85rem; color:var(--muted);">중복 없는 3자리 숫자를 맞춰보세요.</p>
+                <input type="text" id="bb-input" maxlength="3" placeholder="예: 482">
+                <button class="btn" style="width:100%;" onclick="playBaseball()">던지기 (확인)</button>
+                <div id="bb-log" class="result-box" style="max-height:150px; overflow-y:auto;">게임 시작! 3자리 숫자를 입력하세요.</div>
+            </div>
+
+            <!-- 반응속도 테스트 -->
+            <div class="card">
+                <h3>⚡ 반응속도 테스트</h3>
+                <p style="font-size:0.85rem; color:var(--muted);">초록색으로 바뀌는 순간 클릭하세요!</p>
+                <div id="reaction-pad" onclick="handleReactionClick()">클릭하여 시작하기</div>
+                <div id="reaction-res" class="result-box">최고 기록: <strong id="best-reaction">-</strong></div>
+            </div>
+
+            <!-- 가위바위보 -->
+            <div class="card">
+                <h3>✌️ 가위바위보 대결</h3>
+                <p style="font-size:0.85rem; color:var(--muted);">컴퓨터와 승부를 겨루세요!</p>
+                <div style="display:flex; gap:8px; margin:15px 0;">
+                    <button class="btn" style="flex:1;" onclick="playRPS('가위')">✌️ 가위</button>
+                    <button class="btn" style="flex:1;" onclick="playRPS('바위')">✊ 바위</button>
+                    <button class="btn" style="flex:1;" onclick="playRPS('보')">🖐️ 보</button>
+                </div>
+                <div id="rps-res" class="result-box">무엇을 낼지 선택하세요!</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 캠퍼스 맛집 & 리뷰 -->
+    <section id="food" class="page">
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3>🍽️ 학교 앞 인기 맛집 피드</h3>
+            <div style="margin-bottom: 12px;">
+                <button class="btn" onclick="filterFood('전체')">전체</button>
+                <button class="btn" onclick="filterFood('한식')">한식</button>
+                <button class="btn" onclick="filterFood('중식/일식')">중식/일식</button>
+                <button class="btn" onclick="filterFood('카페/디저트')">카페/디저트</button>
+            </div>
+            <div id="food-list" class="grid-3"></div>
+        </div>
+
+        <div class="card">
+            <h3>🧾 학생 영수증 한줄 리뷰 작성</h3>
+            <div class="grid-2" style="margin-bottom:0;">
+                <div>
+                    <label>가게명</label>
+                    <input type="text" id="rev-store" placeholder="예: 금래원">
+                </div>
+                <div>
+                    <label>별점</label>
+                    <select id="rev-star">
+                        <option value="⭐⭐⭐⭐⭐">⭐⭐⭐⭐⭐ (강추!)</option>
+                        <option value="⭐⭐⭐⭐">⭐⭐⭐⭐ (맛있어요)</option>
+                        <option value="⭐⭐⭐">⭐⭐⭐ (무난해요)</option>
+                    </select>
+                </div>
+            </div>
+            <label>후기 내용</label>
+            <input type="text" id="rev-text" placeholder="가성비 좋고 양이 푸짐합니다!">
+            <button class="btn" onclick="addReview()">리뷰 등록</button>
+            <div id="review-list" style="margin-top: 15px;"></div>
+        </div>
+    </section>
+
+    <!-- 5. 고객센터 & 방명록 -->
+    <section id="cs" class="page">
+        <div class="grid-2">
+            <div class="card">
+                <h3>📢 공지사항</h3>
+                <div class="result-box" style="margin-bottom:10px;">
+                    <strong>[안내] CAO v1.0 정식 오픈!</strong><br>
+                    대학생의 편리한 공강 및 모임 생활을 위해 제작되었습니다.
+                </div>
+                <div class="result-box">
+                    <strong>[이벤트] 미니게임 랭킹 주간 보상</strong><br>
+                    반응속도 200ms 이하 달성 시 마이페이지에 기록됩니다.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🛠️ 개발자 피드백 & 오류 제보</h3>
+                <label>유형 선택</label>
+                <select id="cs-type">
+                    <option>기능 제안</option>
+                    <option>맛집 추가 요청</option>
+                    <option>오류 / 버그 제보</option>
+                </select>
+                <label>내용</label>
+                <textarea id="cs-content" rows="3" placeholder="건의할 내용을 적어주세요."></textarea>
+                <button class="btn" onclick="submitCS()">제보 접수하기</button>
+                <div id="cs-res" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 마이페이지 -->
+    <section id="mypage" class="page">
+        <div class="card" style="margin-bottom:1.5rem;">
+            <h3>👤 내 프로필 & 활동 요약</h3>
+            <p id="my-profile-info">현재 <strong>비회원(게스트)</strong> 상태로 이용 중입니다. 로그인하시면 학번이 연동됩니다.</p>
+        </div>
+        <div class="grid-3">
+            <div class="card">
+                <h3>💳 내 정산 내역 기록</h3>
+                <ul id="my-dutch-list" style="padding-left: 18px; font-size:0.9rem;">
+                    <li>아직 정산 내역이 없습니다.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>🏆 미니게임 전적</h3>
+                <div id="my-game-stats" class="result-box">
+                    가위바위보: 0승 0무 0패<br>
+                    숫자야구 정답 횟수: 0회<br>
+                    반응속도 최고기록: 기록 없음
+                </div>
+            </div>
+            <div class="card">
+                <h3>❤️ 즐겨찾기 맛집</h3>
+                <ul id="my-fav-food" style="padding-left: 18px; font-size:0.9rem;">
+                    <li>맛집 탭에서 하트를 눌러 추가하세요.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 로그인 모달 -->
+<div id="loginModal" class="modal-overlay" onclick="if(event.target===this) closeModal('loginModal')">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px;">🎓 CAO 로그인</h3>
+        <input type="email" id="login-email" placeholder="학교 이메일 (예: 2335035@pcu.ac.kr)">
+        <input type="password" id="login-pw" placeholder="비밀번호">
+        <button class="btn" style="width:100%; margin-bottom:8px;" onclick="doLogin()">로그인</button>
+        <button class="btn btn-accent" style="width:100%;" onclick="doSocialLogin('카카오')">카카오 간편 로그인</button>
+    </div>
+</div>
+
+<!-- 회원가입 모달 -->
+<div id="signupModal" class="modal-overlay" onclick="if(event.target===this) closeModal('signupModal')">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px;">📝 대학생 회원가입</h3>
+        <input type="email" id="reg-email" placeholder="학교 이메일 (@ac.kr)">
+        <input type="text" id="reg-id" placeholder="학번 (예: 2335035)">
+        <input type="text" id="reg-name" placeholder="닉네임 (예: 진우성)">
+        <button class="btn" style="width:100%;" onclick="doSignup()">가입 완료</button>
+    </div>
+</div>
+
+<footer>
+    CAO (Campus All In One) - 2335035 진우성 웹사이트 프로젝트
+</footer>
+
+<script>
+    // 상태 관리 객체
+    const appState = {
+        user: null,
+        dutchHistory: [],
+        favFoods: [],
+        gameStats: { rpsWin: 0, rpsDraw: 0, rpsLose: 0, bbWins: 0, bestReaction: null }
+    };
+
+    // SPA 페이지 전환
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(pageId).classList.add('active');
+        const navBtn = document.querySelector(`#main-nav button[data-page="${pageId}"]`);
+        if (navBtn) navBtn.classList.add('active');
+        if (pageId === 'mypage') renderMyPage();
+    }
+
+    // 1. 홈 / 브리핑 로직
+    function updateWeather() {
+        const val = document.getElementById('weather-select').value;
+        const tips = {
+            sunny: "☀️ 야외 활동하기 딱 좋은 날씨! 가벼운 셔츠나 얇은 가디건을 추천합니다.",
+            cloudy: "☁️ 일교차가 있으니 바람막이나 맨투맨을 챙기세요.",
+            rain: "☔ 우산 필수! 방수되는 신발과 겉옷을 챙기세요.",
+            cold: "❄️ 매우 춥습니다! 롱패딩과 목도리로 완전 무장하세요."
+        };
+        document.getElementById('weather-display').innerText = tips[val];
+    }
+
+    function updateClockAndCountdown() {
+        const now = new Date();
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString('ko-KR');
+
+        const targetVal = document.getElementById('next-class-time').value;
+        if (!targetVal) return;
+        const [h, m] = targetVal.split(':').map(Number);
+        const target = new Date();
+        target.setHours(h, m, 0, 0);
+
+        const diff = target - now;
+        const box = document.getElementById('countdown-display');
+        if (diff <= 0) {
+            box.innerHTML = "🔔 설정한 수업 시간이 지났거나 이미 시작되었습니다!";
+        } else {
+            const hrs = Math.floor(diff / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+            box.innerHTML = `다음 수업까지 남은 공강 시간: <strong>${hrs}시간 ${mins}분 ${secs}초</strong>`;
+        }
+    }
+
+    const quotes = [
+        "“공강은 짧고 하고 싶은 게임은 많다.” - 캠퍼스 격언",
+        "“오늘 미룬 과제는 내일의 나를 울린다.”",
+        "“더치페이는 정확할수록 우정이 깊어진다.”",
+        "“학점도 중요하지만 오늘 점심 메뉴가 더 시급하다.”"
+    ];
+    let qIdx = 0;
+    function nextQuote() {
+        document.getElementById('quote-box').innerText = quotes[qIdx % quotes.length];
+        qIdx++;
+    }
+
+    // 2. 펀 & 정산 툴 로직
+    function calcDutch() {
+        const title = document.getElementById('dutch-title').value || "캠퍼스 모임";
+        const total = parseInt(document.getElementById('dutch-total').value) || 0;
+        const people = parseInt(document.getElementById('dutch-people').value) || 0;
+        if (total <= 0 || people <= 0) {
+            alert("금액과 인원을 정확히 입력해주세요.");
+            return;
+        }
+        const per = Math.floor(total / people);
+        const record = `${title}: 총 ${total.toLocaleString()}원 / ${people}명 → 1인당 ${per.toLocaleString()}원`;
+        appState.dutchHistory.unshift(record);
+        document.getElementById('dutch-res').innerHTML = `<strong>1인당 ${per.toLocaleString()}원</strong><br><small>(마이페이지에 자동 저장됨)</small>`;
+    }
+
+    function runLadder() {
+        const names = document.getElementById('ladder-names').value.split(',').map(s => s.trim()).filter(Boolean);
+        const items = document.getElementById('ladder-items').value.split(',').map(s => s.trim()).filter(Boolean);
+        if (names.length === 0 || names.length !== items.length) {
+            alert("참여자 수와 항목 수를 쉼표로 구분하여 똑같이 맞춰주세요!");
+            return;
+        }
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        let html = names.map((n, i) => `👤 <strong>${n}</strong> ➔ <span style="color:var(--primary); font-weight:bold;">${shuffled[i]}</span>`).join('<br>');
+        document.getElementById('ladder-res').innerHTML = html;
+    }
+
+    function spinRoulette() {
+        const items = document.getElementById('roulette-items').value.split(',').map(s => s.trim()).filter(Boolean);
+        if (items.length === 0) return;
+        const pick = items[Math.floor(Math.random() * items.length)];
+        document.getElementById('roulette-res').innerHTML = `🎉 오늘의 당첨 결과: <strong style="font-size:1.15rem; color:#d97706;">${pick}</strong>`;
+    }
+
+    // 3. 미니게임 존 로직
+    let bbAnswer = [];
+    let bbTries = 0;
+    function initBaseball() {
+        const nums = [0,1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+        bbAnswer = nums.slice(0, 3);
+        bbTries = 0;
+        document.getElementById('bb-log').innerHTML = "새 게임 시작! 3자리 숫자를 입력하세요.";
+        document.getElementById('bb-input').value = "";
+    }
+    function playBaseball() {
+        const val = document.getElementById('bb-input').value;
+        if (!/^\d{3}$/.test(val) || new Set(val).size !== 3) {
+            alert("중복되지 않는 3자리 숫자를 입력하세요!");
+            return;
+        }
+        bbTries++;
+        const guess = val.split('').map(Number);
+        let s = 0, b = 0;
+        guess.forEach((num, idx) => {
+            if (num === bbAnswer[idx]) s++;
+            else if (bbAnswer.includes(num)) b++;
+        });
+        const log = document.getElementById('bb-log');
+        if (s === 3) {
+            appState.gameStats.bbWins++;
+            log.innerHTML = `<strong style="color:green;">🎊 홈런! ${bbTries}번 만에 정답(${val})!</strong><br>` + log.innerHTML;
+        } else {
+            log.innerHTML = `[${bbTries}회] ${val} ➔ <strong>${s}S ${b}B</strong><br>` + log.innerHTML;
+        }
+        document.getElementById('bb-input').value = "";
+    }
+
+    let reactState = 'idle', reactTimer = null, reactStart = 0;
+    function handleReactionClick() {
+        const pad = document.getElementById('reaction-pad');
+        if (reactState === 'idle') {
+            reactState = 'waiting';
+            pad.style.background = '#dc2626';
+            pad.innerText = "초록색이 될 때까지 기다리세요...";
+            reactTimer = setTimeout(() => {
+                reactState = 'ready';
+                pad.style.background = '#16a34a';
+                pad.innerText = "지금 클릭하세요!!";
+                reactStart = Date.now();
+            }, Math.random() * 2000 + 1500);
+        } else if (reactState === 'waiting') {
+            clearTimeout(reactTimer);
+            reactState = 'idle';
+            pad.style.background = '#64748b';
+            pad.innerText = "너무 성급했어요! 다시 클릭하여 시작";
+        } else if (reactState === 'ready') {
+            const ms = Date.now() - reactStart;
+            reactState = 'idle';
+            pad.style.background = '#2563eb';
+            pad.innerText = `${ms}ms! (다시 하려면 클릭)`;
+            if (!appState.gameStats.bestReaction || ms < appState.gameStats.bestReaction) {
+                appState.gameStats.bestReaction = ms;
+                document.getElementById('best-reaction').innerText = ms + " ms";
             }
         }
-    </script>
+    }
+
+    function playRPS(userPick) {
+        const choices = ['가위', '바위', '보'];
+        const comPick = choices[Math.floor(Math.random() * 3)];
+        let result = "";
+        if (userPick === comPick) {
+            result = "무승부! 🤝";
+            appState.gameStats.rpsDraw++;
+        } else if (
+            (userPick === '가위' && comPick === '보') ||
+            (userPick === '바위' && comPick === '가위') ||
+            (userPick === '보' && comPick === '바위')
+        ) {
+            result = "승리했습니다! 🎉";
+            appState.gameStats.rpsWin++;
+        } else {
+            result = "패배했습니다! 😢";
+            appState.gameStats.rpsLose++;
+        }
+        document.getElementById('rps-res').innerHTML = `나: <strong>${userPick}</strong> vs 컴퓨터: <strong>${comPick}</strong><br>결과: <strong>${result}</strong>`;
+    }
+
+    // 4. 캠퍼스 맛집 & 리뷰 로직
+    const stores = [
+        { name: "금래원", cat: "중식/일식", menu: "짜장면 & 탕수육 세트", rating: "4.8" },
+        { name: "정문 앞 엄마손백반", cat: "한식", menu: "제육덮밥 / 김치찌개", rating: "4.7" },
+        { name: "캠퍼스 로스터리", cat: "카페/디저트", menu: "아이스 아메리카노 2,000원", rating: "4.9" },
+        { name: "가츠동 하우스", cat: "중식/일식", menu: "치즈돈까스 정식", rating: "4.6" },
+        { name: "할머니 순대국밥", cat: "한식", menu: "얼큰 순대국밥", rating: "4.8" },
+        { name: "와플 대학로점", cat: "카페/디저트", menu: "생크림 사과 와플", rating: "4.7" }
+    ];
+
+    function filterFood(cat) {
+        const list = document.getElementById('food-list');
+        const filtered = cat === '전체' ? stores : stores.filter(s => s.cat === cat);
+        list.innerHTML = filtered.map(s => `
+            <div class="result-box" style="margin:0;">
+                <span class="badge">${s.cat}</span> <strong>⭐ ${s.rating}</strong>
+                <h4 style="margin:6px 0;">${s.name}</h4>
+                <p style="font-size:0.85rem; color:var(--muted);">대표: ${s.menu}</p>
+                <button class="btn" style="padding:4px 10px; font-size:0.8rem; margin-top:8px;" onclick="toggleFav('${s.name}')">❤️ 즐겨찾기</button>
+            </div>
+        `).join('');
+    }
+
+    function toggleFav(name) {
+        if (!appState.favFoods.includes(name)) {
+            appState.favFoods.push(name);
+            alert(`'${name}'이(가) 마이페이지 즐겨찾기에 추가되었습니다!`);
+        } else {
+            alert("이미 즐겨찾기에 등록된 맛집입니다.");
+        }
+    }
+
+    function addReview() {
+        const store = document.getElementById('rev-store').value.trim();
+        const star = document.getElementById('rev-star').value;
+        const text = document.getElementById('rev-text').value.trim();
+        if (!store || !text) { alert("가게명과 후기를 입력해주세요."); return; }
+
+        const writer = appState.user ? appState.user.name : "익명 학우";
+        const item = document.createElement('div');
+        item.className = 'result-box';
+        item.innerHTML = `<strong>[${store}]</strong> ${star} - <em>${writer}</em><br>${text}`;
+        document.getElementById('review-list').prepend(item);
+        document.getElementById('rev-store').value = "";
+        document.getElementById('rev-text').value = "";
+    }
+
+    // 5. 고객센터
+    function submitCS() {
+        const type = document.getElementById('cs-type').value;
+        const content = document.getElementById('cs-content').value.trim();
+        if (!content) { alert("내용을 입력해주세요."); return; }
+        const box = document.getElementById('cs-res');
+        box.style.display = "block";
+        box.innerHTML = `✅ <strong>[${type}]</strong> 정상 접수되었습니다. 빠른 시일 내 반영하겠습니다!`;
+        document.getElementById('cs-content').value = "";
+    }
+
+    // 인증 & 마이페이지
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function doLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        if (!email) { alert("이메일을 입력하세요."); return; }
+        appState.user = { name: email.split('@')[0], email };
+        updateAuthUI();
+        closeModal('loginModal');
+    }
+    function doSocialLogin(provider) {
+        appState.user = { name: `${provider} 학생회원`, email: "student@ac.kr" };
+        updateAuthUI();
+        closeModal('loginModal');
+    }
+    function doSignup() {
+        const name = document.getElementById('reg-name').value.trim();
+        const id = document.getElementById('reg-id').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        if (!name || !email) { alert("필수 정보를 입력하세요."); return; }
+        appState.user = { name: `${name} (${id})`, email };
+        updateAuthUI();
+        closeModal('signupModal');
+        alert("회원가입 및 자동 로그인이 완료되었습니다!");
+    }
+    function updateAuthUI() {
+        document.getElementById('auth-area').innerHTML = `
+            <span style="font-size:0.9rem; margin-right:6px;">👋 ${appState.user.name}님</span>
+            <button onclick="location.reload()">로그아웃</button>
+        `;
+    }
+
+    function renderMyPage() {
+        if (appState.user) {
+            document.getElementById('my-profile-info').innerHTML = `환영합니다, <strong>${appState.user.name}</strong>님! (${appState.user.email})`;
+        }
+        if (appState.dutchHistory.length > 0) {
+            document.getElementById('my-dutch-list').innerHTML = appState.dutchHistory.map(d => `<li>${d}</li>`).join('');
+        }
+        const g = appState.gameStats;
+        document.getElementById('my-game-stats').innerHTML = `
+            가위바위보: <strong>${g.rpsWin}승 ${g.rpsDraw}무 ${g.rpsLose}패</strong><br>
+            숫자야구 정답 횟수: <strong>${g.bbWins}회</strong><br>
+            반응속도 최고기록: <strong>${g.bestReaction ? g.bestReaction + 'ms' : '기록 없음'}</strong>
+        `;
+        if (appState.favFoods.length > 0) {
+            document.getElementById('my-fav-food').innerHTML = appState.favFoods.map(f => `<li>⭐ ${f}</li>`).join('');
+        }
+    }
+
+    // 초기 실행
+    window.onload = function() {
+        updateWeather();
+        nextQuote();
+        initBaseball();
+        filterFood('전체');
+        updateClockAndCountdown();
+        setInterval(updateClockAndCountdown, 1000);
+    };
+</script>
 </body>
 </html>
