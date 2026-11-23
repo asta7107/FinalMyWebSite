@@ -84,6 +84,7 @@ function renderLayout(activePage) {
                 <a href="food.html" class="${activePage === 'food' ? 'active' : ''}">4. 캠퍼스 맛집 & 리뷰</a>
                 <a href="mypage.html" class="${activePage === 'mypage' ? 'active' : ''}">5. 마이페이지</a>
                 <a href="cs.html" class="${activePage === 'cs' ? 'active' : ''}">6. 고객센터</a>
+                  <a href="cs.html" class="${activePage === 'subscribe' ? 'active' : ''}">7. 맵버쉽 구독</a>
             </nav>
             <div class="auth-area">${authHtml}</div>
         `;
