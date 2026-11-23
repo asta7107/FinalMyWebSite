@@ -48,39 +48,146 @@
 
     <script src="common.js"></script>
     <script>
-        renderLayout('login');
+        if (typeof renderLayout === 'function') {
+            renderLayout('login');
+        }
+
+        function appendAuthLog(action, userInfo, keepLogin) {
+            const logKey = 'cao_auth_records';
+            let records = [];
+            try {
+                const raw = localStorage.getItem(logKey);
+                records = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(records)) records = [];
+            } catch (err) {
+                records = [];
+            }
+
+            records.unshift({
+                action,
+                email: userInfo.email,
+                studentId: userInfo.studentId || '',
+                nickname: userInfo.nickname || '',
+                favCategory: userInfo.favCategory || '',
+                keepLogin: Boolean(keepLogin),
+                timestamp: new Date().toISOString()
+            });
+
+            try {
+                localStorage.setItem(logKey, JSON.stringify(records));
+                localStorage.setItem('cao_current_user', JSON.stringify({
+                    ...userInfo,
+                    keepLogin: Boolean(keepLogin)
+                }));
+            } catch (err) {
+                console.warn('로컬 스토리지 기록 저장 실패:', err);
+            }
+        }
+
+        function findSavedProfile(email) {
+            try {
+                const raw = localStorage.getItem('cao_auth_records');
+                const records = raw ? JSON.parse(raw) : [];
+                if (Array.isArray(records)) {
+                    const matched = records.find(
+                        (item) => item && item.email && item.email.toLowerCase() === email.toLowerCase() && item.nickname
+                    );
+                    if (matched) {
+                        return {
+                            studentId: matched.studentId || '23학번',
+                            nickname: matched.nickname,
+                            favCategory: matched.favCategory || '한식'
+                        };
+                    }
+                }
+            } catch (err) {
+                // ignore storage read error
+            }
+            return null;
+        }
+
+        function saveLoginSession(userObj, actionLabel, keepLogin) {
+            if (typeof getAppState === 'function' && typeof saveAppState === 'function') {
+                const state = getAppState();
+                state.user = {
+                    email: userObj.email,
+                    studentId: userObj.studentId,
+                    nickname: userObj.nickname,
+                    favCategory: userObj.favCategory
+                };
+                state.keepLogin = Boolean(keepLogin);
+                state.authHistory = Array.isArray(state.authHistory) ? state.authHistory : [];
+                state.authHistory.unshift({
+                    action: actionLabel,
+                    email: userObj.email,
+                    nickname: userObj.nickname,
+                    keepLogin: Boolean(keepLogin),
+                    timestamp: new Date().toISOString()
+                });
+                saveAppState(state);
+            }
+
+            appendAuthLog(actionLabel, {
+                ...userObj,
+                loggedIn: true,
+                updatedAt: new Date().toISOString()
+            }, keepLogin);
+        }
 
         function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim();
+            const pw = document.getElementById('login-pw').value;
+            const keepLogin = document.getElementById('keep-login').checked;
+
             if (!email) {
                 alert('이메일을 입력하세요.');
                 return;
             }
-            const state = getAppState();
+
+            void pw;
             const prefix = email.split('@')[0];
-            state.user = {
-                email: email,
-                studentId: '23학번',
-                nickname: prefix,
-                favCategory: '한식'
+            const saved = findSavedProfile(email);
+            const userObj = {
+                email,
+                studentId: saved ? saved.studentId : '23학번',
+                nickname: saved ? saved.nickname : prefix,
+                favCategory: saved ? saved.favCategory : '한식'
             };
-            saveAppState(state);
-            showToast(`${prefix}님 환영합니다!`);
-            setTimeout(() => { location.href = 'index.html'; }, 700);
+
+            saveLoginSession(userObj, '이메일 로그인', keepLogin);
+
+            if (typeof showToast === 'function') {
+                showToast(`${userObj.nickname}님 환영합니다!`);
+            } else {
+                alert(`${userObj.nickname}님 환영합니다!`);
+            }
+
+            setTimeout(() => {
+                location.href = 'index.html';
+            }, 700);
         }
 
         function socialLogin(providerName) {
-            const state = getAppState();
-            state.user = {
+            const keepLogin = document.getElementById('keep-login').checked;
+            const userObj = {
                 email: 'student@campus.ac.kr',
                 studentId: '23학번',
                 nickname: providerName,
                 favCategory: '전체'
             };
-            saveAppState(state);
-            showToast(`${providerName} 계정으로 간편 로그인되었습니다.`);
-            setTimeout(() => { location.href = 'index.html'; }, 700);
+
+            saveLoginSession(userObj, `${providerName} 간편 로그인`, keepLogin);
+
+            if (typeof showToast === 'function') {
+                showToast(`${providerName} 계정으로 간편 로그인되었습니다.`);
+            } else {
+                alert(`${providerName} 계정으로 간편 로그인되었습니다.`);
+            }
+
+            setTimeout(() => {
+                location.href = 'index.html';
+            }, 700);
         }
     </script>
 </body>
