@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - 펀 & 정산 툴</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <main>
+        <div class="page-header">
+            <h2>💰 펀 & 정산 툴 (Smart Utility Tools)</h2>
+            <p>조모임·뒷풀이 금액 정산부터 벌칙 사다리타기, 점심 메뉴 랜덤 룰렛까지 한 번에 해결하세요.</p>
+        </div>
+
+        <div class="grid-3">
+            <!-- 1. 스마트 더치페이 계산기 -->
+            <section class="card" id="dutch">
+                <h3>💸 스마트 더치페이 계산기</h3>
+                <label for="dutch-title">모임명 / 내역</label>
+                <input type="text" id="dutch-title" placeholder="예: 웹프로그래밍 팀플 뒷풀이">
+
+                <label for="dutch-total">총 결제 금액 (원)</label>
+                <input type="number" id="dutch-total" placeholder="예: 54000" min="1">
+
+                <label for="dutch-count">참여 인원 (명)</label>
+                <input type="number" id="dutch-count" placeholder="예: 4" min="1">
+
+                <button class="btn btn-full" onclick="calcDutch()">정산 계산 및 내역 저장</button>
+                <div id="dutch-result" class="result-box">금액과 인원을 입력하고 계산 버튼을 눌러주세요.</div>
+            </section>
+
+            <!-- 2. 벌칙 사다리타기 -->
+            <section class="card" id="ladder">
+                <h3>🪜 벌칙 사다리타기</h3>
+                <label for="ladder-names">참여자 이름 (쉼표 구분)</label>
+                <input type="text" id="ladder-names" value="김철수, 이영희, 박민수, 진우성">
+
+                <label for="ladder-items">벌칙 / 당첨 항목 (참여자 수와 동일하게 입력)</label>
+                <input type="text" id="ladder-items" value="커피 쏘기, 통과, 설거지/정리, 통과">
+
+                <button class="btn btn-accent btn-full" onclick="runLadder()">사다리 결과 확인!</button>
+                <div id="ladder-result" class="result-box">참여자 수와 항목 수를 똑같이 맞춘 뒤 실행하세요.</div>
+            </section>
+
+            <!-- 3. 오늘의 랜덤 룰렛 -->
+            <section class="card" id="roulette">
+                <h3>🎰 오늘의 랜덤 룰렛</h3>
+                <label for="roulette-items">후보 항목 입력 (쉼표 구분)</label>
+                <textarea id="roulette-items" rows="4">학식당 돈까스, 제육덮밥, 마라탕, 국밥, 햄버거 세트, 편의점 도시락</textarea>
+
+                <button class="btn btn-full" style="background:#0f172a;" onclick="spinRoulette()">룰렛 돌리기!</button>
+                <div id="roulette-result" class="result-box">결정 장애 해결! 후보를 적고 룰렛을 돌려보세요.</div>
+            </section>
+        </div>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        renderLayout('tools');
+
+        function calcDutch() {
+            const title = document.getElementById('dutch-title').value.trim() || '캠퍼스 모임 정산';
+            const total = Number(document.getElementById('dutch-total').value);
+            const count = Number(document.getElementById('dutch-count').value);
+
+            if (!total || total <= 0 || !count || count <= 0) {
+                alert('금액과 인원을 정확히 입력해주세요.');
+                return;
+            }
+
+            const perPerson = Math.floor(total / count);
+            const remainder = total - (perPerson * count);
+            const today = new Date().toISOString().split('T')[0];
+
+            const state = getAppState();
+            state.dutchHistory.unshift({
+                title,
+                total,
+                count,
+                perPerson,
+                date: today
+            });
+            saveAppState(state);
+
+            const box = document.getElementById('dutch-result');
+            box.innerHTML = `
+                <strong>[${title}] 정산 완료!</strong><br>
+                • 총 금액: ${total.toLocaleString()}원 (${count}명)<br>
+                • <span style="color:#1e3a8a; font-size:1.1rem; font-weight:bold;">1인당 부담액: ${perPerson.toLocaleString()}원</span>
+                ${remainder > 0 ? `<br><span style="font-size:0.85rem; color:#64748b;">(1원 단위 절사 차액 ${remainder}원 발생)</span>` : ''}
+            `;
+            showToast('정산 내역이 마이페이지에 자동 저장되었습니다.');
+        }
+
+        function runLadder() {
+            const names = document.getElementById('ladder-names').value.split(',').map(s => s.trim()).filter(Boolean);
+            const items = document.getElementById('ladder-items').value.split(',').map(s => s.trim()).filter(Boolean);
+
+            if (names.length === 0 || names.length !== items.length) {
+                alert('참여자 수와 항목 수를 쉼표로 구분하여 똑같이 맞춰주세요!');
+                return;
+            }
+
+            const shuffled = [...items].sort(() => Math.random() - 0.5);
+            const htmlList = names.map((name, idx) => {
+                const isPenalty = shuffled[idx] !== '통과';
+                return `<div style="padding:3px 0;">👤 <strong>${name}</strong> ➔ <span style="color:${isPenalty ? '#dc2626' : '#16a34a'}; font-weight:bold;">${shuffled[idx]}</span></div>`;
+            }).join('');
+
+            document.getElementById('ladder-result').innerHTML = htmlList;
+            showToast('사다리타기 매칭이 완료되었습니다!');
+        }
+
+        function spinRoulette() {
+            const list = document.getElementById('roulette-items').value.split(',').map(s => s.trim()).filter(Boolean);
+            if (list.length < 2) {
+                alert('최소 2개 이상의 후보 항목을 쉼표로 구분해 입력해주세요!');
+                return;
+            }
+            const box = document.getElementById('roulette-result');
+            box.textContent = '🎲 룰렛이 돌아가는 중...';
+            setTimeout(() => {
+                const picked = list[Math.floor(Math.random() * list.length)];
+                box.innerHTML = `🎉 오늘의 당첨 결과: <strong style="color:#d97706; font-size:1.15rem;">[ ${picked} ]</strong>`;
+            }, 350);
+        }
+    </script>
+</body>
+</html>

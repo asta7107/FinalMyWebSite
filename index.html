@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - Campus All In One | 홈 브리핑</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        /* 우측 세로 빠른 이동 아이콘 독(Dock) */
+        .quick-icon-dock {
+            position: fixed;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 250;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+        }
+
+        .quick-dock-item {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+            text-decoration: none;
+            transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .quick-dock-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.9;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .quick-dock-item:hover,
+        .quick-dock-item.active {
+            background: #eff6ff;
+            color: var(--primary);
+            transform: translateX(-2px);
+        }
+
+        .quick-dock-item::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 54px;
+            top: 50%;
+            transform: translateY(-50%) translateX(4px);
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 5px 10px;
+            border-radius: 7px;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .quick-dock-item:hover::before {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .quick-dock-divider {
+            width: 26px;
+            height: 1px;
+            background: #e2e8f0;
+            margin: 2px 0;
+        }
+
+        @media (max-width: 900px) {
+            .quick-icon-dock {
+                top: auto;
+                bottom: 14px;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                flex-direction: row;
+                padding: 6px 10px;
+                border-radius: 14px;
+            }
+
+            .quick-dock-divider {
+                width: 1px;
+                height: 24px;
+                margin: 0 2px;
+            }
+
+            .quick-dock-item {
+                width: 40px;
+                height: 40px;
+            }
+
+            .quick-dock-item::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <!-- 메인화면 빠른 이동 세로 아이콘 바 -->
+    <aside class="quick-icon-dock" aria-label="메인화면 빠른 이동 아이콘">
+        <a href="index.html" class="quick-dock-item active" data-tooltip="홈으로 이동">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 10.5L12 3l9 7.5"></path>
+                <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"></path>
+            </svg>
+        </a>
+        <div class="quick-dock-divider"></div>
+
+        <!-- 1번째 이미지 스타일: 맛집 리뷰 아이콘 -->
+        <a href="food.html" class="quick-dock-item" data-tooltip="캠퍼스 맛집 &amp; 리뷰">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 9l1.5-5h11L17 9"></path>
+                <path d="M3 9a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0 2 2 2 2 0 0 0 2-2"></path>
+                <path d="M4.5 11v4"></path>
+                <rect x="8" y="13" width="13" height="8" rx="2"></rect>
+                <line x1="11" y1="16" x2="18" y2="16"></line>
+                <line x1="11" y1="18.5" x2="16" y2="18.5"></line>
+                <circle cx="19.5" cy="6.5" r="2.5"></circle>
+            </svg>
+        </a>
+
+        <!-- 2번째 이미지 스타일: 게임 컨트롤러 액션 아이콘 -->
+        <a href="games.html" class="quick-dock-item" data-tooltip="미니게임 존">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="12" y1="2.5" x2="12" y2="5"></line>
+                <line x1="7.5" y1="3.8" x2="9" y2="5.8"></line>
+                <line x1="16.5" y1="3.8" x2="15" y2="5.8"></line>
+                <path d="M6.5 8.5h11a4.5 4.5 0 0 1 4.2 6l-1.2 3.5a2 2 0 0 1-2.8 1.1l-2.7-1.6H9l-2.7 1.6a2 2 0 0 1-2.8-1.1L2.3 14.5a4.5 4.5 0 0 1 4.2-6z"></path>
+                <path d="M8 11.5v3M6.5 13h3"></path>
+                <circle cx="16.5" cy="11.5" r="1"></circle>
+                <circle cx="16.5" cy="14.5" r="1"></circle>
+                <circle cx="15" cy="13" r="1"></circle>
+                <circle cx="18" cy="13" r="1"></circle>
+            </svg>
+        </a>
+
+        <!-- 3번째 이미지 스타일: 동전 교환 순환 아이콘 (펀 & 정산 툴) -->
+        <a href="tools.html" class="quick-dock-item" data-tooltip="펀 &amp; 정산 툴">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 11.5A7.5 7.5 0 0 1 16.5 5.8"></path>
+                <polyline points="14.5 6.3 17 6 16.5 3.5"></polyline>
+                <path d="M19.5 12.5A7.5 7.5 0 0 1 7.5 18.2"></path>
+                <polyline points="9.5 17.7 7 18 7.5 20.5"></polyline>
+                <ellipse cx="12" cy="11" rx="4.5" ry="2"></ellipse>
+                <path d="M7.5 11v3.5c0 1.1 2 2 4.5 2s4.5-.9 4.5-2V11"></path>
+            </svg>
+        </a>
+
+        <div class="quick-dock-divider"></div>
+
+        <!-- 마이페이지 -->
+        <a href="mypage.html" class="quick-dock-item" data-tooltip="마이페이지">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8.5" r="3.5"></circle>
+                <path d="M5 19.5a7 7 0 0 1 14 0"></path>
+            </svg>
+        </a>
+    </aside>
+
+    <main>
+        <!-- 학교 앞 인기 맛집 광고 배너 -->
+        <section class="food-ad-banner">
+            <div class="food-ad-content">
+                <span class="ad-badge">🔥 이번 주 캠퍼스 핫플 추천</span>
+                <h2>공강 시간 30분이면 충분한 학교 앞 찐맛집!</h2>
+                <p>학우들의 영수증 한줄 리뷰로 검증된 캠퍼스 로컬 맛집 랭킹과 메뉴 랜덤 룰렛을 지금 바로 확인해보세요.</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <a href="food.html" class="btn btn-accent">🍜 캠퍼스 맛집 보러가기</a>
+                    <a href="tools.html" class="btn" style="background:rgba(255,255,255,0.2);">🎰 점심 메뉴 룰렛 돌리기</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid-2">
+            <!-- 1. 오늘의 캠퍼스 날씨 & 옷차림 -->
+            <section class="card">
+                <h3>🌤️ 오늘의 캠퍼스 날씨 &amp; 옷차림</h3>
+                <label for="weather-select">현재 캠퍼스 날씨 상태 선택</label>
+                <select id="weather-select" onchange="updateWeather()">
+                    <option value="sunny">☀️ 맑고 포근함 (18°C ~ 22°C)</option>
+                    <option value="cloudy">⛅ 구름 많고 선선함 (13°C ~ 17°C)</option>
+                    <option value="rain">🌧️ 비 소식 있음 (11°C ~ 15°C)</option>
+                    <option value="cold">❄️ 쌀쌀한 한파 (0°C ~ 6°C)</option>
+                </select>
+                <div id="weather-result" class="result-box"></div>
+            </section>
+
+            <!-- 2. 실시간 공강 타임머신 -->
+            <section class="card">
+                <h3>⏳ 실시간 공강 타임머신</h3>
+                <p style="font-size:0.92rem; color:var(--muted);">현재 시각: <strong id="current-time" style="color:var(--primary);">--:--:--</strong></p>
+                <label for="next-class-time" style="margin-top:10px;">다음 수업 시작 시간 설정</label>
+                <input type="time" id="next-class-time" value="15:00" onchange="updateTimer()">
+                <div id="timer-result" class="result-box" style="font-weight:bold; color:var(--primary);"></div>
+            </section>
+        </div>
+
+        <div class="grid-2">
+            <!-- 3. 오늘의 캠퍼스 명언 -->
+            <section class="card" id="quote-section">
+                <h3>
+                    <span>💬 오늘의 캠퍼스 명언</span>
+                    <button class="btn btn-sm btn-outline" onclick="nextQuote()">다른 명언</button>
+                </h3>
+                <div id="quote-box" class="result-box" style="min-height:85px; display:flex; align-items:center; font-size:1rem; font-weight:500;"></div>
+            </section>
+
+            <!-- 4. 4대 핵심 기능 퀵 런처 -->
+            <section class="card">
+                <h3>🚀 퀵 런처 (자주 쓰는 기능 바로가기)</h3>
+                <p style="font-size:0.9rem; color:var(--muted); margin-bottom:12px;">필요한 캠퍼스 유틸리티 페이지로 즉시 이동합니다.</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <a href="tools.html#dutch" class="btn">💰 스마트 더치페이</a>
+                    <a href="tools.html#ladder" class="btn btn-accent">🪜 벌칙 사다리타기</a>
+                    <a href="games.html" class="btn" style="background:#0f172a;">⚾ 공강 미니게임 존</a>
+                    <a href="food.html" class="btn" style="background:#16a34a;">🍜 학교 앞 맛집 피드</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        if (typeof renderLayout === 'function') {
+            renderLayout('index');
+        }
+
+        const weatherGuides = {
+            sunny: '👕 추천 코디: 얇은 셔츠나 맨투맨에 슬랙스/데님 조합이 딱 좋아요! 낮에는 햇살이 따뜻하니 가벼운 겉옷을 챙기세요.',
+            cloudy: '🧥 추천 코디: 일교차가 큰 날씨입니다. 니트나 후드티 위에 가디건이나 바람막이 자켓을 걸치는 것을 추천합니다.',
+            rain: '☔ 추천 코디: 우산 필수! 젖기 쉬운 긴 바지보다는 조거 팬츠나 어두운 톤 하의에 방수 아우터를 추천합니다.',
+            cold: '🧣 추천 코디: 체감온도가 매우 낮습니다. 히트텍 이너에 두꺼운 패딩이나 울 코트, 목도리로 보온에 신경 쓰세요!'
+        };
+
+        function updateWeather() {
+            const selectEl = document.getElementById('weather-select');
+            const resultEl = document.getElementById('weather-result');
+            if (!selectEl || !resultEl) return;
+            resultEl.textContent = weatherGuides[selectEl.value] || '';
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const currentTimeEl = document.getElementById('current-time');
+            if (currentTimeEl) {
+                currentTimeEl.textContent = now.toTimeString().split(' ')[0];
+            }
+
+            const targetInput = document.getElementById('next-class-time');
+            const box = document.getElementById('timer-result');
+            if (!targetInput || !box || !targetInput.value) return;
+
+            const parts = targetInput.value.split(':').map(Number);
+            const th = parts[0];
+            const tm = parts[1] || 0;
+            const target = new Date();
+            target.setHours(th, tm, 0, 0);
+
+            const diff = target - now;
+            if (diff <= 0) {
+                box.textContent = '🔔 설정한 수업 시간이 이미 지났거나 현재 수업 중입니다!';
+                box.style.borderLeftColor = '#dc2626';
+            } else {
+                const hrs = Math.floor(diff / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+                box.textContent = `⏰ 다음 수업까지 남은 공강 시간: ${hrs}시간 ${mins}분 ${secs}초`;
+                box.style.borderLeftColor = '#3b82f6';
+            }
+        }
+
+        const quotes = [
+            '“공강 1시간은 10분처럼 흐르고, 전공 수업 10분은 1시간처럼 흐른다.”',
+            '“오늘 미룬 과제는 내일의 나를 배신하지 않고 반드시 찾아온다.”',
+            '“팀플의 완성은 자료조사가 아니라 깔끔한 더치페이 정산에서 끝난다.”',
+            '“점심 메뉴를 빨리 정하는 자가 학식당 줄을 먼저 선점한다.”',
+            '“성적은 잠시지만, 공강 시간에 친구들과 웃었던 기억은 평생 간다.”'
+        ];
+        let quoteIdx = 0;
+
+        function nextQuote() {
+            const quoteBox = document.getElementById('quote-box');
+            if (!quoteBox) return;
+            quoteBox.textContent = quotes[quoteIdx];
+            quoteIdx = (quoteIdx + 1) % quotes.length;
+        }
+
+        updateWeather();
+        updateTimer();
+        nextQuote();
+        setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

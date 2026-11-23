@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - 미니게임 존</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <main>
+        <div class="page-header">
+            <h2>🎮 미니게임 존 (공강 아케이드)</h2>
+            <p>수업 사이 공강 시간에 가볍게 즐기는 두뇌·순발력 미니게임! 모든 전적은 마이페이지에 기록됩니다.</p>
+        </div>
+
+        <div class="grid-3">
+            <!-- 1. 3자리 숫자야구 -->
+            <section class="card">
+                <h3>
+                    <span>⚾ 3자리 숫자야구</span>
+                    <button class="btn btn-sm btn-outline" onclick="initBaseball()">새 게임</button>
+                </h3>
+                <p style="font-size:0.88rem; color:var(--muted); margin-bottom:8px;">0~9 사이의 중복 없는 3자리 숫자를 맞춰보세요.</p>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="bb-input" maxlength="3" placeholder="예: 381" style="margin:0;">
+                    <button class="btn" style="white-space:nowrap;" onclick="guessBaseball()">던지기</button>
+                </div>
+                <div id="bb-log" class="result-box" style="max-height:180px; overflow-y:auto; font-size:0.9rem;">
+                    새 게임이 준비되었습니다. 숫자를 입력하세요!
+                </div>
+            </section>
+
+            <!-- 2. 반응속도 테스트 -->
+            <section class="card">
+                <h3>⚡ 반응속도 테스트</h3>
+                <p style="font-size:0.88rem; color:var(--muted);">패드가 <strong>초록색</strong>으로 변하는 순간 최대한 빠르게 클릭하세요!</p>
+                <div id="reaction-pad" onclick="handleReactionClick()">클릭하여 테스트 시작</div>
+                <div id="reaction-result" class="result-box">최고 기록: <strong id="best-ms-display">기록 없음</strong></div>
+            </section>
+
+            <!-- 3. 가위바위보 대결 -->
+            <section class="card">
+                <h3>✊✌️✋ 가위바위보 대결</h3>
+                <p style="font-size:0.88rem; color:var(--muted); margin-bottom:12px;">AI와의 심리전! 버튼을 눌러 승부를 겨루세요.</p>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" style="flex:1;" onclick="playRPS('가위')">✌️ 가위</button>
+                    <button class="btn" style="flex:1;" onclick="playRPS('바위')">✊ 바위</button>
+                    <button class="btn" style="flex:1;" onclick="playRPS('보')">✋ 보</button>
+                </div>
+                <div id="rps-result" class="result-box">버튼을 선택하면 AI와 즉시 대결합니다.</div>
+            </section>
+        </div>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        renderLayout('games');
+
+        // 1. 숫자야구 로직
+        let bbAnswer = [];
+        let bbTries = 0;
+        let bbFinished = false;
+
+        function initBaseball() {
+            const digits = ['0','1','2','3','4','5','6','7','8','9'];
+            bbAnswer = [];
+            while (bbAnswer.length < 3) {
+                const idx = Math.floor(Math.random() * digits.length);
+                bbAnswer.push(digits.splice(idx, 1)[0]);
+            }
+            bbTries = 0;
+            bbFinished = false;
+            document.getElementById('bb-input').value = '';
+            document.getElementById('bb-log').innerHTML = '⚾ 새 게임 시작! 중복 없는 3자리 숫자를 입력하세요.';
+        }
+
+        function guessBaseball() {
+            if (bbFinished) {
+                alert('이미 정답을 맞췄습니다! [새 게임] 버튼을 눌러주세요.');
+                return;
+            }
+            const val = document.getElementById('bb-input').value.trim();
+            if (!/^\d{3}$/.test(val) || new Set(val).size !== 3) {
+                alert('중복되지 않는 3자리 숫자를 입력하세요!');
+                return;
+            }
+            bbTries++;
+            let strike = 0, ball = 0;
+            for (let i = 0; i < 3; i++) {
+                if (val[i] === bbAnswer[i]) strike++;
+                else if (bbAnswer.includes(val[i])) ball++;
+            }
+
+            const logBox = document.getElementById('bb-log');
+            if (bbTries === 1) logBox.innerHTML = '';
+
+            if (strike === 3) {
+                bbFinished = true;
+                const state = getAppState();
+                state.gameStats.bbWins += 1;
+                saveAppState(state);
+                logBox.innerHTML = `<div style="color:#16a34a; font-weight:bold;">🎉 [${bbTries}회] ${val} ➔ 홈런(3S)! 정답입니다!</div>` + logBox.innerHTML;
+                showToast('숫자야구 승리 기록이 저장되었습니다!');
+            } else {
+                const msg = (strike === 0 && ball === 0) ? 'OUT (일치 없음)' : `${strike}S ${ball}B`;
+                logBox.innerHTML = `<div>[${bbTries}회] <strong>${val}</strong> ➔ ${msg}</div>` + logBox.innerHTML;
+            }
+            document.getElementById('bb-input').value = '';
+        }
+
+        // 2. 반응속도 테스트 로직
+        let rxState = 'idle'; // idle | waiting | ready
+        let rxTimer = null;
+        let rxStartTime = 0;
+
+        function updateBestDisplay() {
+            const state = getAppState();
+            const best = state.gameStats.bestReaction;
+            document.getElementById('best-ms-display').textContent = best ? `${best} ms` : '기록 없음';
+        }
+
+        function handleReactionClick() {
+            const pad = document.getElementById('reaction-pad');
+            const res = document.getElementById('reaction-result');
+
+            if (rxState === 'idle') {
+                rxState = 'waiting';
+                pad.style.background = '#dc2626';
+                pad.textContent = '초록색으로 바뀔 때까지 기다리세요...';
+                const delay = 1500 + Math.random() * 2000;
+                rxTimer = setTimeout(() => {
+                    rxState = 'ready';
+                    rxStartTime = Date.now();
+                    pad.style.background = '#16a34a';
+                    pad.textContent = '지금 클릭하세요!!';
+                }, delay);
+            } else if (rxState === 'waiting') {
+                clearTimeout(rxTimer);
+                rxState = 'idle';
+                pad.style.background = '#64748b';
+                pad.textContent = '너무 성급했어요! 다시 클릭하여 시작';
+                showToast('초록색으로 변한 뒤 클릭해야 합니다.');
+            } else if (rxState === 'ready') {
+                const elapsed = Date.now() - rxStartTime;
+                rxState = 'idle';
+                pad.style.background = '#2563eb';
+                pad.textContent = `${elapsed} ms! (다시 하려면 클릭)`;
+
+                const state = getAppState();
+                if (!state.gameStats.bestReaction || elapsed < state.gameStats.bestReaction) {
+                    state.gameStats.bestReaction = elapsed;
+                    saveAppState(state);
+                    showToast(`신기록 달성! ${elapsed} ms`);
+                }
+                res.innerHTML = `이번 기록: <strong>${elapsed} ms</strong> | 최고 기록: <strong id="best-ms-display">${state.gameStats.bestReaction} ms</strong>`;
+            }
+        }
+
+        // 3. 가위바위보 로직
+        function playRPS(userChoice) {
+            const choices = ['가위', '바위', '보'];
+            const aiChoice = choices[Math.floor(Math.random() * 3)];
+            const state = getAppState();
+
+            let outcome = '';
+            let color = '';
+            if (userChoice === aiChoice) {
+                outcome = '무승부!';
+                color = '#64748b';
+                state.gameStats.rpsDraw += 1;
+            } else if (
+                (userChoice === '가위' && aiChoice === '보') ||
+                (userChoice === '바위' && aiChoice === '가위') ||
+                (userChoice === '보' && aiChoice === '바위')
+            ) {
+                outcome = '승리했습니다! 🎉';
+                color = '#16a34a';
+                state.gameStats.rpsWin += 1;
+            } else {
+                outcome = '패배했습니다 😅';
+                color = '#dc2626';
+                state.gameStats.rpsLose += 1;
+            }
+            saveAppState(state);
+
+            document.getElementById('rps-result').innerHTML = `
+                나: <strong>${userChoice}</strong> vs AI: <strong>${aiChoice}</strong><br>
+                결과: <strong style="color:${color}; font-size:1.05rem;">${outcome}</strong><br>
+                <span style="font-size:0.85rem; color:#64748b;">누적 전적: ${state.gameStats.rpsWin}승 ${state.gameStats.rpsDraw}무 ${state.gameStats.rpsLose}패</span>
+            `;
+        }
+
+        initBaseball();
+        updateBestDisplay();
+    </script>
+</body>
+</html>

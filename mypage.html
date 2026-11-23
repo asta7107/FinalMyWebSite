@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - 마이페이지</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <main>
+        <div class="page-header">
+            <h2>👤 마이페이지 (내 캠퍼스 활동 요약)</h2>
+            <p>정산 내역, 미니게임 전적, 즐겨찾기 맛집 목록을 한눈에 관리할 수 있습니다.</p>
+        </div>
+
+        <div class="grid-2">
+            <!-- 1. 회원 프로필 요약 -->
+            <section class="card">
+                <h3>🎓 내 대학생 프로필</h3>
+                <div id="profile-box" class="result-box"></div>
+            </section>
+
+            <!-- 2. 미니게임 누적 전적 -->
+            <section class="card">
+                <h3>🏆 미니게임 누적 전적</h3>
+                <div id="game-stats-box" class="result-box"></div>
+            </section>
+        </div>
+
+        <div class="grid-2">
+            <!-- 3. 스마트 더치페이 정산 내역 -->
+            <section class="card">
+                <h3>
+                    <span>💸 내 더치페이 정산 기록</span>
+                    <button class="btn btn-sm btn-outline" onclick="clearDutchHistory()">내역 비우기</button>
+                </h3>
+                <div id="dutch-history-list" style="max-height:260px; overflow-y:auto;"></div>
+            </section>
+
+            <!-- 4. 즐겨찾기 맛집 리스트 -->
+            <section class="card">
+                <h3>❤️ 즐겨찾기 등록한 캠퍼스 맛집</h3>
+                <div id="fav-food-list" style="max-height:260px; overflow-y:auto;"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        renderLayout('mypage');
+
+        function renderMyPage() {
+            const state = getAppState();
+
+            // 1. 프로필
+            const pBox = document.getElementById('profile-box');
+            if (state.user) {
+                pBox.innerHTML = `
+                    <p><strong>닉네임:</strong> ${state.user.nickname} (${state.user.studentId})</p>
+                    <p><strong>학교 이메일:</strong> ${state.user.email}</p>
+                    <p><strong>선호 카테고리:</strong> ${state.user.favCategory || '전체'}</p>
+                    <div style="margin-top:10px;">
+                        <button class="btn btn-sm btn-outline" onclick="logoutUser()">로그아웃</button>
+                    </div>
+                `;
+            } else {
+                pBox.innerHTML = `
+                    <p style="color:#64748b; margin-bottom:10px;">현재 <strong>비회원(게스트)</strong> 모드로 이용 중입니다. 로그인하시면 학번 프로필이 연동됩니다.</p>
+                    <a href="login.html" class="btn btn-sm">로그인 하기</a>
+                    <a href="signup.html" class="btn btn-sm btn-accent">대학생 회원가입</a>
+                `;
+            }
+
+            // 2. 게임 전적
+            const g = state.gameStats;
+            document.getElementById('game-stats-box').innerHTML = `
+                <p>✊✌️✋ <strong>가위바위보 전적:</strong> ${g.rpsWin}승 ${g.rpsDraw}무 ${g.rpsLose}패</p>
+                <p>⚾ <strong>3자리 숫자야구 홈런(정답):</strong> ${g.bbWins}회 성공</p>
+                <p>⚡ <strong>반응속도 최고 기록:</strong> ${g.bestReaction ? g.bestReaction + ' ms' : '아직 기록이 없습니다.'}</p>
+            `;
+
+            // 3. 정산 내역
+            const dList = document.getElementById('dutch-history-list');
+            if (state.dutchHistory.length === 0) {
+                dList.innerHTML = `<div class="result-box">저장된 정산 내역이 없습니다. <a href="tools.html">정산 툴에서 계산해보세요!</a></div>`;
+            } else {
+                dList.innerHTML = state.dutchHistory.map(item => `
+                    <div class="result-box" style="margin-bottom:8px;">
+                        <strong>${item.title}</strong> <span style="font-size:0.82rem; color:#64748b;">(${item.date})</span><br>
+                        총 ${item.total.toLocaleString()}원 / ${item.count}명 ➔ <strong style="color:#1e3a8a;">1인당 ${item.perPerson.toLocaleString()}원</strong>
+                    </div>
+                `).join('');
+            }
+
+            // 4. 즐겨찾기 맛집
+            const fList = document.getElementById('fav-food-list');
+            if (state.favFoods.length === 0) {
+                fList.innerHTML = `<div class="result-box">즐겨찾기한 맛집이 없습니다. <a href="food.html">맛집 피드 보러가기</a></div>`;
+            } else {
+                fList.innerHTML = state.favFoods.map(name => `
+                    <div class="result-box" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>❤️ <strong>${name}</strong></span>
+                        <button class="btn btn-sm btn-outline" onclick="removeFav('${name}')">삭제</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeFav(name) {
+            const state = getAppState();
+            state.favFoods = state.favFoods.filter(f => f !== name);
+            saveAppState(state);
+            renderMyPage();
+            showToast('즐겨찾기에서 삭제되었습니다.');
+        }
+
+        function clearDutchHistory() {
+            const state = getAppState();
+            state.dutchHistory = [];
+            saveAppState(state);
+            renderMyPage();
+            showToast('정산 내역이 초기화되었습니다.');
+        }
+
+        renderMyPage();
+    </script>
+</body>
+</html>

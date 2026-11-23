@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - 대학생 회원가입</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <main style="display:flex; justify-content:center; align-items:center;">
+        <div class="card" style="width:100%; max-width:460px; padding:2rem;">
+            <div style="text-align:center; margin-bottom:1.5rem;">
+                <h2 style="color:var(--primary); font-size:1.6rem;">📝 대학생 회원가입</h2>
+                <p style="color:var(--muted); font-size:0.92rem; margin-top:4px;">재학생 인증(@ac.kr) 후 정산 기록과 게임 전적을 저장하세요.</p>
+            </div>
+
+            <form onsubmit="handleSignup(event)">
+                <label for="su-email">대학교 이메일 (@ac.kr 필수)</label>
+                <input type="email" id="su-email" placeholder="2335035@pcu.ac.kr" required>
+
+                <label for="su-pw">비밀번호</label>
+                <input type="password" id="su-pw" placeholder="8자 이상 비밀번호 입력" required>
+
+                <div class="grid-2" style="gap:10px; margin-bottom:0;">
+                    <div>
+                        <label for="su-id">학번</label>
+                        <input type="text" id="su-id" placeholder="예: 23학번" required>
+                    </div>
+                    <div>
+                        <label for="su-nick">닉네임</label>
+                        <input type="text" id="su-nick" placeholder="예: 진우성" required>
+                    </div>
+                </div>
+
+                <label for="su-cat">선호 맛집 카테고리</label>
+                <select id="su-cat">
+                    <option value="한식">🍚 한식 / 백반 / 국밥</option>
+                    <option value="중식·일식">🍜 중식 / 일식 / 돈까스</option>
+                    <option value="카페·디저트">☕ 카페 / 디저트 / 베이커리</option>
+                </select>
+
+                <button type="submit" class="btn btn-accent btn-full" style="margin-top:8px;">가입 완료 및 자동 로그인</button>
+            </form>
+
+            <p style="text-align:center; margin-top:1.2rem; font-size:0.9rem; color:var(--muted);">
+                이미 계정이 있으신가요? <a href="login.html" style="color:var(--primary-light); font-weight:bold;">로그인 화면으로</a>
+            </p>
+        </div>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        renderLayout('signup');
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const email = document.getElementById('su-email').value.trim();
+            const studentId = document.getElementById('su-id').value.trim();
+            const nickname = document.getElementById('su-nick').value.trim();
+            const favCategory = document.getElementById('su-cat').value;
+
+            if (!email || !studentId || !nickname) {
+                alert('필수 정보를 모두 입력하세요.');
+                return;
+            }
+            if (!email.includes('@') || !email.endsWith('ac.kr')) {
+                alert('대학생 인증을 위해 @ac.kr로 끝나는 학교 이메일을 입력해주세요!');
+                return;
+            }
+
+            const state = getAppState();
+            state.user = { email, studentId, nickname, favCategory };
+            saveAppState(state);
+
+            showToast(`가입 완료! ${nickname}님 환영합니다.`);
+            setTimeout(() => { location.href = 'mypage.html'; }, 800);
+        }
+    </script>
+</body>
+</html>

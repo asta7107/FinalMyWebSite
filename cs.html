@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAO - 고객센터</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .guestbook-card {
+            margin-top: 1.5rem;
+        }
+
+        .guestbook-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .back-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--primary-light);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .back-home-link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .giscus-wrapper {
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header id="app-header"></header>
+
+    <main>
+        <div class="page-header">
+            <h2>📢 고객센터 (공지사항 &amp; 피드백 제보)</h2>
+            <p>CAO 서비스 업데이트 소식을 확인하고, 새로운 기능 제안이나 캠퍼스 맛집 추가를 요청해주세요[cite: 3].</p>
+        </div>
+
+        <div class="grid-2">
+            <!-- 1. 서비스 공지사항 -->
+            <section class="card">
+                <h3>📌 서비스 공지사항 &amp; 이벤트</h3>
+                <div class="result-box">
+                    <strong>[공지] CAO (Campus All In One) 정식 웹앱 오픈 안내</strong>
+                    <p style="font-size:0.9rem; margin-top:4px;">공강 타임머신, 스마트 더치페이, 미니게임 존, 캠퍼스 맛집 영수증 리뷰 기능이 모두 오픈되었습니다[cite: 3].</p>
+                    <span style="font-size:0.8rem; color:#64748b;">2026-11-23 | 운영팀[cite: 3]</span>
+                </div>
+                <div class="result-box">
+                    <strong>[이벤트] 학교 앞 신규 맛집 제보 주간 이벤트</strong>
+                    <p style="font-size:0.9rem; margin-top:4px;">우측 피드백 폼으로 학우들만 아는 숨은 맛집을 제보해주시면 메인 배너에 등록해드립니다[cite: 3]!</p>
+                    <span style="font-size:0.8rem; color:#64748b;">2026-11-23 | 캠퍼스 에디터[cite: 3]</span>
+                </div>
+            </section>
+
+            <!-- 2. 피드백 / 오류 제보 접수 -->
+            <section class="card">
+                <h3>✉️ 개발자 피드백 &amp; 제보 접수</h3>
+                <label for="cs-type">문의 유형 선택</label>
+                <select id="cs-type">
+                    <option value="기능 제안">💡 새로운 유틸리티/게임 기능 제안</option>
+                    <option value="맛집 추가 요청">🍜 캠퍼스 신규 맛집 등록 요청</option>
+                    <option value="오류/버그 제보">🛠️ 화면 및 기능 오류/버그 제보</option>
+                </select>
+
+                <label for="cs-content">상세 내용</label>
+                <textarea id="cs-content" rows="4" placeholder="제안하실 기능이나 추가하고 싶은 학교 앞 가게 이름, 오류 내용을 자세히 적어주세요[cite: 3]."></textarea>
+
+                <button class="btn btn-full" onclick="submitInquiry()">제보 접수하기</button>
+                <div id="cs-result" class="result-box" style="display:none;"></div>
+            </section>
+        </div>
+
+        <!-- 3. 방명록 (Giscus) -->
+        <section class="card guestbook-card" id="guestbook-section">
+            <div class="guestbook-top-bar">
+                <h3 style="margin-bottom:0; border-bottom:none; padding-bottom:0;">📝 방명록</h3>
+                <a href="index.html" class="back-home-link">← 메인으로 돌아가기</a>
+            </div>
+            <p style="font-size:0.92rem; color:var(--muted); margin-bottom:0.5rem;">자유롭게 방문 기록을 남겨주세요.</p>
+
+            <div class="giscus-wrapper">
+                <!-- Giscus 방명록 위젯 -->
+                <script src="https://giscus.app/client.js"
+                        data-repo="asta7107/FinalWeb"
+                        data-repo-id="R_kgDOVvx8ag"
+                        data-category="General"
+                        data-category-id="DIC_kwDOVvx8as4DLOYr"
+                        data-mapping="pathname"
+                        data-strict="0"
+                        data-reactions-enabled="1"
+                        data-emit-metadata="0"
+                        data-input-position="bottom"
+                        data-theme="preferred_color_scheme"
+                        data-lang="ko"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            </div>
+        </section>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        renderLayout('cs');
+
+        function submitInquiry() {
+            const type = document.getElementById('cs-type').value;
+            const content = document.getElementById('cs-content').value.trim();
+
+            if (!content) {
+                alert('문의 및 제보 내용을 입력해주세요!');
+                return;
+            }
+
+            const state = getAppState();
+            state.inquiries.unshift({
+                type,
+                content,
+                date: new Date().toISOString().split('T')[0]
+            });
+            saveAppState(state);
+
+            const box = document.getElementById('cs-result');
+            box.style.display = 'block';
+            box.innerHTML = `✅ <strong>[${type}]</strong> 접수가 완료되었습니다! 소중한 의견 감사합니다[cite: 3].`;
+            document.getElementById('cs-content').value = '';
+            showToast('피드백이 정상적으로 접수되었습니다.');
+        }
+    </script>
+</body>
+</html>
