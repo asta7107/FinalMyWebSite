@@ -259,18 +259,24 @@
 
     <script src="common.js"></script>
     <script>
-        if (typeof renderLayout === 'function') {
-            renderLayout('index');
-        }
+        function ensureSubscribeNavOnce() {
+            const headerNav = document.querySelector('#app-header nav');
+            if (!headerNav) return;
 
-        // common.js의 renderLayout이 헤더를 덮어쓴 경우에도 멤버십 구독 메뉴가 유지되도록 보장
-        const headerNav = document.querySelector('#app-header nav');
-        if (headerNav && !headerNav.querySelector('a[href="subscribe.html"]')) {
+            // subscribe.html 링크가 여러 개 생겼다면 모두 제거 후 딱 1개만 추가
+            const existingSubLinks = headerNav.querySelectorAll('a[href="subscribe.html"]');
+            existingSubLinks.forEach((el) => el.remove());
+
             const subLink = document.createElement('a');
             subLink.href = 'subscribe.html';
             subLink.textContent = '7. 멤버십 구독';
             headerNav.appendChild(subLink);
         }
+
+        if (typeof renderLayout === 'function') {
+            renderLayout('index');
+        }
+        ensureSubscribeNavOnce();
 
         const weatherGuides = {
             sunny: '👕 추천 코디: 얇은 셔츠나 맨투맨에 슬랙스/데님 조합이 딱 좋아요! 낮에는 햇살이 따뜻하니 가벼운 겉옷을 챙기세요.',
