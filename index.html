@@ -115,7 +115,22 @@
     </style>
 </head>
 <body>
-    <header id="app-header"></header>
+    <header id="app-header">
+        <a href="index.html" class="logo">🎓 CAO <span>Campus All In One</span></a>
+        <nav>
+            <a href="index.html" class="active">1. 홈 / 브리핑</a>
+            <a href="tools.html">2. 펀 &amp; 정산 툴</a>
+            <a href="games.html">3. 미니게임 존</a>
+            <a href="food.html">4. 캠퍼스 맛집 &amp; 리뷰</a>
+            <a href="mypage.html">5. 마이페이지</a>
+            <a href="cs.html">6. 고객센터</a>
+            <a href="subscribe.html">7. 멤버십 구독</a>
+        </nav>
+        <div class="auth-area">
+            <a href="login.html" class="auth-btn">로그인</a>
+            <a href="signup.html" class="auth-btn accent">회원가입</a>
+        </div>
+    </header>
 
     <!-- 메인화면 빠른 이동 세로 아이콘 바 -->
     <aside class="quick-icon-dock" aria-label="메인화면 빠른 이동 아이콘">
@@ -246,6 +261,15 @@
     <script>
         if (typeof renderLayout === 'function') {
             renderLayout('index');
+        }
+
+        // common.js의 renderLayout이 헤더를 덮어쓴 경우에도 멤버십 구독 메뉴가 유지되도록 보장
+        const headerNav = document.querySelector('#app-header nav');
+        if (headerNav && !headerNav.querySelector('a[href="subscribe.html"]')) {
+            const subLink = document.createElement('a');
+            subLink.href = 'subscribe.html';
+            subLink.textContent = '7. 멤버십 구독';
+            headerNav.appendChild(subLink);
         }
 
         const weatherGuides = {
