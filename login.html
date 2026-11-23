@@ -34,8 +34,8 @@
             <div style="margin:1.2rem 0; text-align:center; color:var(--muted); font-size:0.85rem;">또는 소셜 계정 간편 로그인</div>
 
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <button type="button" class="btn btn-full" style="background:#fee500; color:#191919;" onclick="socialLogin('카카오 학우')">💬 카카오 계정으로 3초 로그인</button>
-                <button type="button" class="btn btn-full" style="background:#03c75a; color:#ffffff;" onclick="socialLogin('네이버 학우')">N 네이버 계정으로 로그인</button>
+                <button type="button" class="btn btn-full" style="background:#fee500; color:#191919;" onclick="socialLogin('kakao', '카카오 학우')">💬 카카오 계정으로 3초 로그인</button>
+                <button type="button" class="btn btn-full" style="background:#03c75a; color:#ffffff;" onclick="socialLogin('naver', '네이버 학우')">N 네이버 계정으로 로그인</button>
             </div>
 
             <p style="text-align:center; margin-top:1.4rem; font-size:0.9rem; color:var(--muted);">
@@ -52,86 +52,118 @@
             renderLayout('login');
         }
 
-        function appendAuthLog(action, userInfo, keepLogin) {
-            const logKey = 'cao_auth_records';
-            let records = [];
+        const ACCOUNTS_KEY = 'cao_accounts';
+        const AUTH_LOGS_KEY = 'cao_auth_records';
+        const CURRENT_USER_KEY = 'cao_current_user';
+
+        function readAccounts() {
             try {
-                const raw = localStorage.getItem(logKey);
-                records = raw ? JSON.parse(raw) : [];
-                if (!Array.isArray(records)) records = [];
+                const raw = localStorage.getItem(ACCOUNTS_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
             } catch (err) {
-                records = [];
+                return [];
+            }
+        }
+
+        function writeAccounts(accounts) {
+            try {
+                localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+            } catch (err) {
+                console.warn('계정 목록 저장 실패:', err);
+            }
+        }
+
+        function appendAuthLog(entry) {
+            try {
+                const raw = localStorage.getItem(AUTH_LOGS_KEY);
+                const logs = raw ? JSON.parse(raw) : [];
+                const list = Array.isArray(logs) ? logs : [];
+                list.unshift(entry);
+                localStorage.setItem(AUTH_LOGS_KEY, JSON.stringify(list));
+            } catch (err) {
+                console.warn('인증 이력 저장 실패:', err);
+            }
+        }
+
+        function completeAccountLogin(accountObj, actionLabel, keepLogin) {
+            const nowIso = new Date().toISOString();
+            const accounts = readAccounts();
+            const idx = accounts.findIndex(
+                (acc) => acc && acc.email && acc.email.toLowerCase() === accountObj.email.toLowerCase()
+            );
+
+            let updatedAccount;
+            if (idx >= 0) {
+                const prev = accounts[idx];
+                const nextCount = (Number(prev.loginCount) || 0) + 1;
+                updatedAccount = {
+                    ...prev,
+                    ...accountObj,
+                    createdAt: prev.createdAt || nowIso,
+                    lastLoginAt: nowIso,
+                    loginCount: nextCount
+                };
+                accounts[idx] = updatedAccount;
+            } else {
+                updatedAccount = {
+                    ...accountObj,
+                    createdAt: nowIso,
+                    lastLoginAt: nowIso,
+                    loginCount: 1
+                };
+                accounts.unshift(updatedAccount);
             }
 
-            records.unshift({
-                action,
-                email: userInfo.email,
-                studentId: userInfo.studentId || '',
-                nickname: userInfo.nickname || '',
-                favCategory: userInfo.favCategory || '',
+            writeAccounts(accounts);
+
+            const currentUser = {
+                email: updatedAccount.email,
+                studentId: updatedAccount.studentId,
+                nickname: updatedAccount.nickname,
+                favCategory: updatedAccount.favCategory,
+                provider: updatedAccount.provider || '이메일',
+                loginCount: updatedAccount.loginCount,
+                lastLoginAt: updatedAccount.lastLoginAt,
                 keepLogin: Boolean(keepLogin),
-                timestamp: new Date().toISOString()
-            });
+                loggedIn: true
+            };
 
             try {
-                localStorage.setItem(logKey, JSON.stringify(records));
-                localStorage.setItem('cao_current_user', JSON.stringify({
-                    ...userInfo,
-                    keepLogin: Boolean(keepLogin)
-                }));
+                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
             } catch (err) {
-                console.warn('로컬 스토리지 기록 저장 실패:', err);
+                console.warn('현재 사용자 저장 실패:', err);
             }
-        }
 
-        function findSavedProfile(email) {
-            try {
-                const raw = localStorage.getItem('cao_auth_records');
-                const records = raw ? JSON.parse(raw) : [];
-                if (Array.isArray(records)) {
-                    const matched = records.find(
-                        (item) => item && item.email && item.email.toLowerCase() === email.toLowerCase() && item.nickname
-                    );
-                    if (matched) {
-                        return {
-                            studentId: matched.studentId || '23학번',
-                            nickname: matched.nickname,
-                            favCategory: matched.favCategory || '한식'
-                        };
-                    }
-                }
-            } catch (err) {
-                // ignore storage read error
-            }
-            return null;
-        }
+            const logEntry = {
+                action: actionLabel,
+                email: updatedAccount.email,
+                studentId: updatedAccount.studentId,
+                nickname: updatedAccount.nickname,
+                favCategory: updatedAccount.favCategory,
+                loginCount: updatedAccount.loginCount,
+                keepLogin: Boolean(keepLogin),
+                timestamp: nowIso
+            };
+            appendAuthLog(logEntry);
 
-        function saveLoginSession(userObj, actionLabel, keepLogin) {
             if (typeof getAppState === 'function' && typeof saveAppState === 'function') {
                 const state = getAppState();
                 state.user = {
-                    email: userObj.email,
-                    studentId: userObj.studentId,
-                    nickname: userObj.nickname,
-                    favCategory: userObj.favCategory
+                    email: updatedAccount.email,
+                    studentId: updatedAccount.studentId,
+                    nickname: updatedAccount.nickname,
+                    favCategory: updatedAccount.favCategory,
+                    loginCount: updatedAccount.loginCount
                 };
+                state.accounts = accounts;
                 state.keepLogin = Boolean(keepLogin);
                 state.authHistory = Array.isArray(state.authHistory) ? state.authHistory : [];
-                state.authHistory.unshift({
-                    action: actionLabel,
-                    email: userObj.email,
-                    nickname: userObj.nickname,
-                    keepLogin: Boolean(keepLogin),
-                    timestamp: new Date().toISOString()
-                });
+                state.authHistory.unshift(logEntry);
                 saveAppState(state);
             }
 
-            appendAuthLog(actionLabel, {
-                ...userObj,
-                loggedIn: true,
-                updatedAt: new Date().toISOString()
-            }, keepLogin);
+            return updatedAccount;
         }
 
         function handleLogin(e) {
@@ -146,21 +178,24 @@
             }
 
             void pw;
-            const prefix = email.split('@')[0];
-            const saved = findSavedProfile(email);
-            const userObj = {
-                email,
-                studentId: saved ? saved.studentId : '23학번',
-                nickname: saved ? saved.nickname : prefix,
-                favCategory: saved ? saved.favCategory : '한식'
-            };
+            const accounts = readAccounts();
+            const matchedAccount = accounts.find(
+                (acc) => acc && acc.email && acc.email.toLowerCase() === email.toLowerCase()
+            );
 
-            saveLoginSession(userObj, '이메일 로그인', keepLogin);
+            // 등록된 계정이 없으면 회원가입 페이지로 안내 후 이동
+            if (!matchedAccount) {
+                alert('등록된 계정이 없습니다. 회원가입 화면으로 이동합니다.');
+                location.href = `signup.html?email=${encodeURIComponent(email)}`;
+                return;
+            }
+
+            const updated = completeAccountLogin(matchedAccount, '이메일 로그인', keepLogin);
 
             if (typeof showToast === 'function') {
-                showToast(`${userObj.nickname}님 환영합니다!`);
+                showToast(`${updated.nickname}님 환영합니다! (누적 로그인 ${updated.loginCount}회)`);
             } else {
-                alert(`${userObj.nickname}님 환영합니다!`);
+                alert(`${updated.nickname}님 환영합니다! (누적 로그인 ${updated.loginCount}회)`);
             }
 
             setTimeout(() => {
@@ -168,21 +203,28 @@
             }, 700);
         }
 
-        function socialLogin(providerName) {
+        function socialLogin(providerKey, providerName) {
             const keepLogin = document.getElementById('keep-login').checked;
-            const userObj = {
-                email: 'student@campus.ac.kr',
+            const socialEmail = `${providerKey}.student@campus.ac.kr`;
+            const accounts = readAccounts();
+            const existing = accounts.find(
+                (acc) => acc && acc.email && acc.email.toLowerCase() === socialEmail.toLowerCase()
+            );
+
+            const baseAccount = existing || {
+                email: socialEmail,
                 studentId: '23학번',
                 nickname: providerName,
-                favCategory: '전체'
+                favCategory: '전체',
+                provider: providerName
             };
 
-            saveLoginSession(userObj, `${providerName} 간편 로그인`, keepLogin);
+            const updated = completeAccountLogin(baseAccount, `${providerName} 간편 로그인`, keepLogin);
 
             if (typeof showToast === 'function') {
-                showToast(`${providerName} 계정으로 간편 로그인되었습니다.`);
+                showToast(`${updated.nickname} 계정으로 로그인되었습니다. (누적 ${updated.loginCount}회)`);
             } else {
-                alert(`${providerName} 계정으로 간편 로그인되었습니다.`);
+                alert(`${updated.nickname} 계정으로 로그인되었습니다. (누적 ${updated.loginCount}회)`);
             }
 
             setTimeout(() => {
