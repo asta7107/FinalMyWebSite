@@ -54,11 +54,42 @@
 
     <script src="common.js"></script>
     <script>
-        renderLayout('signup');
+        if (typeof renderLayout === 'function') {
+            renderLayout('signup');
+        }
+
+        function appendAuthLog(action, userInfo) {
+            const logKey = 'cao_auth_records';
+            let records = [];
+            try {
+                const raw = localStorage.getItem(logKey);
+                records = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(records)) records = [];
+            } catch (err) {
+                records = [];
+            }
+
+            records.unshift({
+                action,
+                email: userInfo.email,
+                studentId: userInfo.studentId || '',
+                nickname: userInfo.nickname || '',
+                favCategory: userInfo.favCategory || '',
+                timestamp: new Date().toISOString()
+            });
+
+            try {
+                localStorage.setItem(logKey, JSON.stringify(records));
+                localStorage.setItem('cao_current_user', JSON.stringify(userInfo));
+            } catch (err) {
+                console.warn('로컬 스토리지 기록 저장 실패:', err);
+            }
+        }
 
         function handleSignup(e) {
             e.preventDefault();
             const email = document.getElementById('su-email').value.trim();
+            const pw = document.getElementById('su-pw').value;
             const studentId = document.getElementById('su-id').value.trim();
             const nickname = document.getElementById('su-nick').value.trim();
             const favCategory = document.getElementById('su-cat').value;
@@ -72,12 +103,41 @@
                 return;
             }
 
-            const state = getAppState();
-            state.user = { email, studentId, nickname, favCategory };
-            saveAppState(state);
+            const userProfile = {
+                email,
+                studentId,
+                nickname,
+                favCategory,
+                loggedIn: true,
+                updatedAt: new Date().toISOString()
+            };
 
-            showToast(`가입 완료! ${nickname}님 환영합니다.`);
-            setTimeout(() => { location.href = 'mypage.html'; }, 800);
+            if (typeof getAppState === 'function' && typeof saveAppState === 'function') {
+                const state = getAppState();
+                state.user = { email, studentId, nickname, favCategory };
+                state.authHistory = Array.isArray(state.authHistory) ? state.authHistory : [];
+                state.authHistory.unshift({
+                    action: '회원가입 및 자동 로그인',
+                    email,
+                    nickname,
+                    timestamp: new Date().toISOString()
+                });
+                saveAppState(state);
+            }
+
+            // 비밀번호 원문은 저장하지 않고 가입/로그인 이력 및 사용자 프로필만 저장
+            void pw;
+            appendAuthLog('회원가입 및 자동 로그인', userProfile);
+
+            if (typeof showToast === 'function') {
+                showToast(`가입 완료! ${nickname}님 환영합니다.`);
+            } else {
+                alert(`가입 완료! ${nickname}님 환영합니다.`);
+            }
+
+            setTimeout(() => {
+                location.href = 'mypage.html';
+            }, 800);
         }
     </script>
 </body>
