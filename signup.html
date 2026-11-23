@@ -58,31 +58,47 @@
             renderLayout('signup');
         }
 
-        function appendAuthLog(action, userInfo) {
-            const logKey = 'cao_auth_records';
-            let records = [];
-            try {
-                const raw = localStorage.getItem(logKey);
-                records = raw ? JSON.parse(raw) : [];
-                if (!Array.isArray(records)) records = [];
-            } catch (err) {
-                records = [];
+        const ACCOUNTS_KEY = 'cao_accounts';
+        const AUTH_LOGS_KEY = 'cao_auth_records';
+        const CURRENT_USER_KEY = 'cao_current_user';
+
+        // 로그인 화면에서 계정이 없어 넘어온 경우 이메일 자동 채움
+        (function prefillEmailFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const emailParam = params.get('email');
+            if (emailParam) {
+                const emailInput = document.getElementById('su-email');
+                if (emailInput) emailInput.value = emailParam;
             }
+        })();
 
-            records.unshift({
-                action,
-                email: userInfo.email,
-                studentId: userInfo.studentId || '',
-                nickname: userInfo.nickname || '',
-                favCategory: userInfo.favCategory || '',
-                timestamp: new Date().toISOString()
-            });
-
+        function readAccounts() {
             try {
-                localStorage.setItem(logKey, JSON.stringify(records));
-                localStorage.setItem('cao_current_user', JSON.stringify(userInfo));
+                const raw = localStorage.getItem(ACCOUNTS_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
             } catch (err) {
-                console.warn('로컬 스토리지 기록 저장 실패:', err);
+                return [];
+            }
+        }
+
+        function writeAccounts(accounts) {
+            try {
+                localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+            } catch (err) {
+                console.warn('계정 목록 저장 실패:', err);
+            }
+        }
+
+        function appendAuthLog(entry) {
+            try {
+                const raw = localStorage.getItem(AUTH_LOGS_KEY);
+                const logs = raw ? JSON.parse(raw) : [];
+                const list = Array.isArray(logs) ? logs : [];
+                list.unshift(entry);
+                localStorage.setItem(AUTH_LOGS_KEY, JSON.stringify(list));
+            } catch (err) {
+                console.warn('인증 이력 저장 실패:', err);
             }
         }
 
@@ -103,34 +119,91 @@
                 return;
             }
 
-            const userProfile = {
-                email,
-                studentId,
-                nickname,
-                favCategory,
-                loggedIn: true,
-                updatedAt: new Date().toISOString()
+            void pw;
+            const nowIso = new Date().toISOString();
+            const accounts = readAccounts();
+            const existingIdx = accounts.findIndex(
+                (acc) => acc && acc.email && acc.email.toLowerCase() === email.toLowerCase()
+            );
+
+            let savedAccount;
+            if (existingIdx >= 0) {
+                const prev = accounts[existingIdx];
+                const nextCount = (Number(prev.loginCount) || 0) + 1;
+                savedAccount = {
+                    ...prev,
+                    email,
+                    studentId,
+                    nickname,
+                    favCategory,
+                    provider: prev.provider || '이메일',
+                    updatedAt: nowIso,
+                    lastLoginAt: nowIso,
+                    loginCount: nextCount
+                };
+                accounts[existingIdx] = savedAccount;
+            } else {
+                savedAccount = {
+                    email,
+                    studentId,
+                    nickname,
+                    favCategory,
+                    provider: '이메일',
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                    lastLoginAt: nowIso,
+                    loginCount: 1
+                };
+                accounts.unshift(savedAccount);
+            }
+
+            writeAccounts(accounts);
+
+            const currentUser = {
+                email: savedAccount.email,
+                studentId: savedAccount.studentId,
+                nickname: savedAccount.nickname,
+                favCategory: savedAccount.favCategory,
+                provider: savedAccount.provider,
+                loginCount: savedAccount.loginCount,
+                lastLoginAt: savedAccount.lastLoginAt,
+                loggedIn: true
             };
+
+            try {
+                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+            } catch (err) {
+                console.warn('현재 사용자 저장 실패:', err);
+            }
+
+            const logEntry = {
+                action: existingIdx >= 0 ? '기존 계정 정보 갱신 및 로그인' : '회원가입 및 자동 로그인',
+                email: savedAccount.email,
+                studentId: savedAccount.studentId,
+                nickname: savedAccount.nickname,
+                favCategory: savedAccount.favCategory,
+                loginCount: savedAccount.loginCount,
+                timestamp: nowIso
+            };
+            appendAuthLog(logEntry);
 
             if (typeof getAppState === 'function' && typeof saveAppState === 'function') {
                 const state = getAppState();
-                state.user = { email, studentId, nickname, favCategory };
+                state.user = {
+                    email: savedAccount.email,
+                    studentId: savedAccount.studentId,
+                    nickname: savedAccount.nickname,
+                    favCategory: savedAccount.favCategory,
+                    loginCount: savedAccount.loginCount
+                };
+                state.accounts = accounts;
                 state.authHistory = Array.isArray(state.authHistory) ? state.authHistory : [];
-                state.authHistory.unshift({
-                    action: '회원가입 및 자동 로그인',
-                    email,
-                    nickname,
-                    timestamp: new Date().toISOString()
-                });
+                state.authHistory.unshift(logEntry);
                 saveAppState(state);
             }
 
-            // 비밀번호 원문은 저장하지 않고 가입/로그인 이력 및 사용자 프로필만 저장
-            void pw;
-            appendAuthLog('회원가입 및 자동 로그인', userProfile);
-
             if (typeof showToast === 'function') {
-                showToast(`가입 완료! ${nickname}님 환영합니다.`);
+                showToast(`가입 완료! ${nickname}님 환영합니다. (로그인 ${savedAccount.loginCount}회)`);
             } else {
                 alert(`가입 완료! ${nickname}님 환영합니다.`);
             }
