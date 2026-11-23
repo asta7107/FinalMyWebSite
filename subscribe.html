@@ -267,4 +267,113 @@
                     <li><span class="chk">✓</span> 학교 앞 제휴 맛집 최대 15% 할인 쿠폰</li>
                     <li><span class="chk">✓</span> 미니게임 랭킹 시즌 보상 2배 적립</li>
                     <li><span class="chk">✓</span> 팀플 정산 내역 영수증 PDF/엑셀 내보내기</li>
-                    <li>
+                    <li><span class="chk">✓</span> 학우들과 실시간 룰렛·사다리 방 공유</li>
+                    <li><span class="chk">✓</span> 공강 시간표 &amp; 맞춤형 알림 무제한</li>
+                </ul>
+            </div>
+
+            <!-- 하단 3개 요금제 카드 -->
+            <div class="plan-grid">
+                <!-- 1. 개인 (학생 첫 구독 프로모션 카드) -->
+                <article class="plan-card plan-personal has-ribbon">
+                    <div class="plan-ribbon">첫 달 이용 시 ₩0</div>
+                    <div>
+                        <div class="plan-brand">🎓 CAO Plus</div>
+                        <h3 class="plan-name">개인</h3>
+                        <p class="plan-price-main">첫 달 이용 시 ₩0</p>
+                        <p class="plan-price-sub">체험 기간 종료 후 매월 ₩2,900(부가세 포함) 결제</p>
+                        <div class="plan-divider"></div>
+                        <ul class="plan-features">
+                            <li>CAO Plus 개인 계정 1개</li>
+                            <li>제휴 맛집 월간 할인 패스 4매</li>
+                            <li>언제든 해지 가능</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button class="plan-cta" onclick="selectPlan('개인 (첫 달 ₩0 / 이후 월 ₩2,900)')">
+                            ₩0의 요금으로 1개월 이용해보기
+                        </button>
+                        <p class="plan-footnote">
+                            첫 달 이용 시 ₩0, 이후 매월 ₩2,900입니다. CAO Plus 구독 이력이 없는 대학생만 혜택을 이용할 수 있습니다. <a href="cs.html">약관이 적용됩니다.</a>
+                        </p>
+                    </div>
+                </article>
+
+                <!-- 2. 듀오 / 팀플 (2인 공유 요금제) -->
+                <article class="plan-card plan-duo">
+                    <div>
+                        <div class="plan-brand">🎓 CAO Plus</div>
+                        <h3 class="plan-name">듀오</h3>
+                        <p class="plan-price-main">매월 ₩4,900(부가세 포함)</p>
+                        <p class="plan-price-sub">동기·룸메이트와 1인당 월 ₩2,450으로 이용</p>
+                        <div class="plan-divider"></div>
+                        <ul class="plan-features">
+                            <li>CAO Plus 별도 계정 2개</li>
+                            <li>공유 정산 장부 및 그룹 룰렛 무제한</li>
+                            <li>언제든 해지 가능</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button class="plan-cta" onclick="selectPlan('듀오 (월 ₩4,900)')">
+                            CAO Plus 듀오 시작하기
+                        </button>
+                        <p class="plan-footnote">
+                            같은 캠퍼스 학우 2명이 함께 쓰는 요금제입니다. <a href="cs.html">약관이 적용됩니다.</a>
+                        </p>
+                    </div>
+                </article>
+
+                <!-- 3. 베이직 (라이트 요금제) -->
+                <article class="plan-card plan-basic">
+                    <div>
+                        <div class="plan-brand">🎓 CAO Plus</div>
+                        <h3 class="plan-name">베이직</h3>
+                        <p class="plan-price-main">매월 ₩1,900(부가세 포함)</p>
+                        <p class="plan-price-sub">부담 없이 광고 제거와 툴 확장만 원하는 학우용</p>
+                        <div class="plan-divider"></div>
+                        <ul class="plan-features">
+                            <li>CAO Plus 베이직 계정 1개</li>
+                            <li>제휴 맛집 할인 쿠폰팩은 포함되지 않음</li>
+                            <li>언제든 해지 가능</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button class="plan-cta" onclick="selectPlan('베이직 (월 ₩1,900)')">
+                            CAO Plus 베이직 시작하기
+                        </button>
+                        <p class="plan-footnote">
+                            언제든 마이페이지에서 상위 플랜으로 변경할 수 있습니다. <a href="cs.html">약관이 적용됩니다.</a>
+                        </p>
+                    </div>
+                </article>
+            </div>
+
+            <div id="sub-status-box" class="sub-status-box"></div>
+        </section>
+    </main>
+
+    <footer id="app-footer"></footer>
+
+    <script src="common.js"></script>
+    <script>
+        if (typeof renderLayout === 'function') {
+            renderLayout('subscribe');
+        }
+
+        function selectPlan(planLabel) {
+            const box = document.getElementById('sub-status-box');
+            box.style.display = 'block';
+            box.innerHTML = `✅ <strong>[CAO Plus - ${planLabel}]</strong> 요금제가 선택되었습니다! 로그인 및 결제 연동 후 즉시 멤버십 혜택이 활성화됩니다.`;
+
+            if (typeof getAppState === 'function' && typeof saveAppState === 'function') {
+                const state = getAppState();
+                state.selectedPlan = planLabel;
+                saveAppState(state);
+            }
+            if (typeof showToast === 'function') {
+                showToast(`${planLabel} 요금제를 선택했습니다.`);
+            }
+        }
+    </script>
+</body>
+</html>
