@@ -59,6 +59,11 @@ function logoutUser() {
     const state = getAppState();
     state.user = null;
     saveAppState(state);
+    try {
+        localStorage.removeItem('cao_current_user');
+    } catch (e) {
+        // ignore storage remove error
+    }
     showToast('로그아웃 되었습니다.');
     setTimeout(() => {
         location.href = 'index.html';
@@ -84,6 +89,7 @@ function renderLayout(activePage) {
                 <a href="food.html" class="${activePage === 'food' ? 'active' : ''}">4. 캠퍼스 맛집 & 리뷰</a>
                 <a href="mypage.html" class="${activePage === 'mypage' ? 'active' : ''}">5. 마이페이지</a>
                 <a href="cs.html" class="${activePage === 'cs' ? 'active' : ''}">6. 고객센터</a>
+                <a href="subscribe.html" class="${activePage === 'subscribe' ? 'active' : ''}">7. 멤버십 구독</a>
             </nav>
             <div class="auth-area">${authHtml}</div>
         `;
